@@ -1,0 +1,6 @@
+{
+  "name": "test/main",
+  "main": "index.html",
+  "chromium-args": "--enable-logging=stderr",
+  "type": "module"
+}

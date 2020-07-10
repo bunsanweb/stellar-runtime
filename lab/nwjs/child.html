@@ -1,0 +1,14 @@
+<html>
+  <head>
+    <script type="module">
+window.addEventListener("message", ev => {
+  ev.ports[0].postMessage("from child frame");
+  document.querySelector("pre").textContent += ev.data + "|" + ev.origin + ":" + ev.ports.length + "\n";
+});
+    </script>
+  </head>
+  <body>
+    Child IFrame
+    <pre></pre>
+  </body>
+</html>
