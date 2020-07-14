@@ -1,8 +1,0 @@
-{
-  "dependencies": {
-    "electron": "*"
-  },
-  "scripts": {
-    "start": "electron start.cjs"
-  }
-}
