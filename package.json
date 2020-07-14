@@ -1,0 +1,10 @@
+{
+  "name": "stellar-runtime",
+  "main": "boot.html",
+  "dependencies": {
+    "nw": "0.46.4-sdk"
+  },
+  "scripts": {
+    "start": "nw"
+  }
+}
