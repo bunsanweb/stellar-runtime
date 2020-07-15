@@ -1,0 +1,18 @@
+<html>
+  <head>
+    <script type="module">
+import "https://cdn.jsdelivr.net/npm/ipfs/dist/index.min.js";
+
+(async () => {
+  const node = window.node = await Ipfs.create({
+    repo: `ipfs-${Math.random()}`,
+    relay: {enabled: true, hop: {enabled: true, active: true}},
+  });
+  const h1 = document.createElement("h2");
+  h1.append(`IPFS version: ${(await node.version()).version}`);
+  document.body.append(h1, `IPFS ID: ${(await node.id()).id}`);
+})().catch(console.error);
+    </script>
+  </head>
+  <body></body>
+</html>
