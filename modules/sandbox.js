@@ -1,11 +1,14 @@
 
-export const Sandbox = class {
+export const SandboxEvent = class extends CustomEvent {};
+
+export const Sandbox = class extends EventTarget {
   static create() {
     const rand = crypto.getRandomValues(new Uint8Array(32));
-    const id = Array.from(rand, v => v.toString(16).padStart(2, "0"));
+    const id = Array.from(rand, v => v.toString(16).padStart(2, "0")).join("");
     return new this(id, {});
   }
   constructor(id, config) {
+    super();
     this.id = id;
     this.config = config;
     this.iframe = document.createElement("iframe");
@@ -19,6 +22,8 @@ export const Sandbox = class {
     this.mc.port1.addEventListener("message", ev => {
       //TBD: store ev.data
       this.config = ev.data;
+      const event = new SandboxEvent("config-updated", {data: this});
+      this.dispatchEvent(event);
     });
     this.mc.port1.start();
     return new Promise((f, r) => {
@@ -35,6 +40,8 @@ export const Sandbox = class {
       this.iframe.contentWindow.postMessage(
         {event: "config:update", config: this.config}, "*");
     }
+    const event = new SandboxEvent("config-updated", {data: this});
+    this.dispatchEvent(event);
   }
   stop(timeout = 1000) {
     if (!this.iframe.src) return Promise.resolve();
