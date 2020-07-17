@@ -15,14 +15,20 @@ export const Sandbox = class extends EventTarget {
   }
   async restart(url) {
     await this.stop();
-    await this.start(url);
+    return await this.start(url);
   }
-  start(url) {
+  get data() {
+    const data = {id: this.id, config: this.config};
+    if (this.iframe.src) data.url = this.iframe.src;
+    return data;
+  }
+  start(url = "") {
+    if (!url) return Promise.resolve(this);
     this.mc = new MessageChannel();
     this.mc.port1.addEventListener("message", ev => {
       //TBD: store ev.data
       this.config = ev.data;
-      const event = new SandboxEvent("config-updated", {data: this});
+      const event = new SandboxEvent("updated", {data: this});
       this.dispatchEvent(event);
     });
     this.mc.port1.start();
@@ -30,6 +36,9 @@ export const Sandbox = class extends EventTarget {
       this.iframe.addEventListener("load", ev => {
         this.iframe.contentWindow.postMessage(
           {event: "start", config: this.config}, "*", [this.mc.port2]);
+        const event = new SandboxEvent("updated", {data: this});
+        this.dispatchEvent(event);
+        f(this);
       }, {once: true});
       this.iframe.src = url;
     });
@@ -40,7 +49,7 @@ export const Sandbox = class extends EventTarget {
       this.iframe.contentWindow.postMessage(
         {event: "config:update", config: this.config}, "*");
     }
-    const event = new SandboxEvent("config-updated", {data: this});
+    const event = new SandboxEvent("updated", {data: this});
     this.dispatchEvent(event);
   }
   stop(timeout = 1000) {
