@@ -1,0 +1,79 @@
+<html>
+  <head>
+    <script type="module">
+export const complete = tx => new Promise((f, r) => {
+  if (tx.state === "finished") {
+    if (tx.error) r(tx.error);
+    else f();
+  } else {
+    tx.addEventListener("complete", ev => f());
+    tx.addEventListener("abort", ev => r(tx.error));
+  }
+});
+export const ready = req => new Promise((f, r) => {
+  if (req.readyState === "done") {
+    if (req.error) r(req.error);
+    else f(req.result);
+  } else {
+    req.addEventListener("success", ev => f(req.result));
+    req.addEventListener("error", ev => r(req.error));
+  }
+});
+
+const dbname = "use-idb";
+const dbversion = 1;
+const initVersion1 = ev => {
+  const {oldVersion, newVersion} = ev;
+  if (oldVersion >= 1) return;
+  const db = ev.target.result;
+  const counter = db.createObjectStore("counter");
+  const req = counter.put(0, 0);
+};
+const open = async () => {
+  const req = indexedDB.open(dbname, dbversion);
+  req.addEventListener("upgradeneeded", ev => {
+    initVersion1(ev);
+  });
+  return await ready(req);
+};
+
+const observe = db => {
+  // WICG IDBObserver: https://github.com/WICG/indexed-db-observers/
+  if (typeof window.IDBObserver !== "function") return;
+  const observer = new window.IDBObserver(changes => {
+    const count = changes.records.get("counter").filter(log => log.type === "put").
+                          map(log => log.value).slice(-1)[0];
+    document.querySelector("#count").textContent = count;     
+  });
+  const tx = db.transaction(["counter"], "readonly");
+  observer.observe(db, tx, {operationTypes: ["put"], values: true});
+};
+
+(async () => {
+  const db = await open();
+  observe(db);
+  
+  const tx = db.transaction(["counter"], "readonly");
+  const counter = tx.objectStore("counter");
+  const count = await ready(counter.get(0));
+  document.querySelector("#count").textContent = count;
+  
+  document.querySelector("#countup").addEventListener("click", ev => {
+    (async () => {
+      const tx = db.transaction(["counter"], "readwrite");
+      const counter = tx.objectStore("counter");
+      const count = await ready(counter.get(0));
+      await ready(counter.put(count + 1, 0));
+      await complete(tx);
+      document.querySelector("#count").textContent = count + 1;
+    })().catch(console.error);
+  });
+})().catch(console.error);
+    </script>
+  </head>
+  <body>
+    <h1>Hello IDB</h1>
+    <button id="countup">count up</button>
+    count: <span id="count"></span>
+  </body>
+</html>

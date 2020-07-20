@@ -4,6 +4,7 @@
   "dependencies": {
     "nw": "0.46.4-sdk"
   },
+  "chromium-args": "--javascript-harmony --enable-experimental-web-platform-features",
   "scripts": {
     "start": "nw"
   }
