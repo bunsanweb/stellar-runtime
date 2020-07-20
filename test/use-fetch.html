@@ -1,0 +1,16 @@
+<html>
+  <head>
+    <script type="module">
+console.assert(typeof window.nw === "undefined");
+(async () => {
+  //const res = await fetch("./test.txt");
+  const res = await fetch("https://example.com/");
+  document.querySelector("pre").textContent = await res.text();
+})().catch(console.error);
+    </script>
+  </head>
+  <body>
+    <h1>Hello fetch URL</h1>
+    <pre></pre>
+  </body>
+</html>

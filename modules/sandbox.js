@@ -12,6 +12,7 @@ export const Sandbox = class extends EventTarget {
     this.id = id;
     this.config = config;
     this.iframe = document.createElement("iframe");
+    this.iframe.setAttribute("nwdisable", "nwdisable");
   }
   async restart(url) {
     await this.stop();
