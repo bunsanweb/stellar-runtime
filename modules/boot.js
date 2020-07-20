@@ -3,7 +3,7 @@
 import {Sandbox} from "./sandbox.js";
 import {Storage} from "./storage.js";
 
-const win = nw.Window.get();
+const win = window.nw.Window.get();
 win.showDevTools();
 
 const createSandboxView = (state, sandbox, url = "") => {
@@ -68,12 +68,24 @@ const createSandboxView = (state, sandbox, url = "") => {
   return view;
 };
 
-
 const main = async () => {
   const state = {
     sandboxes: [],
     storage: await Storage.open(),
   };
+  win.on("close", ev => {
+    win.hide();
+    (async () => {
+      try {
+        await Promise.all(state.sandboxes.map(sandbox => sandbox.stop()));
+        win.close(true);
+     } catch (error) {
+       console.error(error);
+       //win.close(true);
+      }
+    })();
+  });
+  
   
   // load from storage
   const sandboxPromises = [];
