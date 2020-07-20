@@ -4,6 +4,7 @@
 let update;
 window.addEventListener("message", ev => {
   if (ev.data.event === "start") {
+    document.querySelector("#id").textContent = ev.data.id;
     document.querySelector("pre").textContent = JSON.stringify(ev.data.config);
     update = ev.ports[0];
   }
@@ -18,7 +19,7 @@ window.addEventListener("message", ev => {
       </script>
   </head>
   <body>
-    <h1>Hello Sandbox</h1>
+    <h1>Hello Sandbox: <span id="id"></span></h1>
     <pre></pre>
   </body>
 </html>

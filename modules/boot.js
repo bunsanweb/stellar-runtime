@@ -9,17 +9,20 @@ win.showDevTools();
 const createSandboxView = (state, sandbox, url = "") => {
   const view = document.createElement("div");
   view.id = sandbox.id;
-
+  
   // controls
   const inputs = document.createElement("div");
-
+  inputs.title = `ID: ${sandbox.id}`;
   const configLabel = document.createElement("label");
   const configInput = document.createElement("input");
   configInput.value = JSON.stringify(sandbox.config);
   configLabel.append("config:", configInput);
-  
+
+  const urlLabel = document.createElement("label");
   const urlInput = document.createElement("input");
   urlInput.value = url;
+  urlLabel.append("URL:", urlInput);
+  
   const loadButton = document.createElement("button");
   loadButton.addEventListener("click", ev => {
     (async () => {
@@ -53,10 +56,12 @@ const createSandboxView = (state, sandbox, url = "") => {
   });
   showLabel.append(showButton, "show");
   
-  inputs.append(urlInput, loadButton, deleteButton, configLabel, showLabel);
+  inputs.append(urlLabel, loadButton, deleteButton, configLabel, showLabel);
 
   // css
   inputs.style.display = "flex";
+  urlLabel.style.flexGrow = "1";    
+  urlLabel.style.display = "flex";
   urlInput.style.flexGrow = "1";    
   
   view.style.width = "95h";
@@ -120,9 +125,15 @@ const main = async () => {
     const view = createSandboxView(state, sandbox);
     sandboxList.append(view);
   });
-  newButton.append("new sandbox");
+  newButton.append("new");
+  const header = document.createElement("header");
+  header.append("Stellar instances", newButton);
+
+  newButton.style.fontSize = "large";
+  header.style.fontWeight = "bold";
+  header.style.fontSize = "large";
   
-  document.body.append(newButton, sandboxList);
+  document.body.append(header, sandboxList);
   await Promise.all(sandboxPromises);
 };
 

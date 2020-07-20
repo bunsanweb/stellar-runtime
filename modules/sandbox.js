@@ -36,7 +36,7 @@ export const Sandbox = class extends EventTarget {
     return new Promise((f, r) => {
       this.iframe.addEventListener("load", ev => {
         this.iframe.contentWindow.postMessage(
-          {event: "start", config: this.config}, "*", [this.mc.port2]);
+          {event: "start", id: this.id, config: this.config}, "*", [this.mc.port2]);
         const event = new SandboxEvent("updated", {data: this});
         this.dispatchEvent(event);
         f(this);
