@@ -2,7 +2,8 @@
   "name": "stellar-runtime",
   "main": "boot.html",
   "dependencies": {
-    "nw": "0.46.4-sdk"
+    "nw": "0.47.1-sdk",
+    "websocket": "*"
   },
   "chromium-args": "--javascript-harmony --enable-experimental-web-platform-features",
   "scripts": {
