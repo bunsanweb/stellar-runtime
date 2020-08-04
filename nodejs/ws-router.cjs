@@ -3,7 +3,7 @@ const http = require("http");
 const websocket = require("websocket");
 
 const idString =
-      buf => [...buf].map(b => b.toString(2).padStart(2, "0")).join("");
+      buf => [...buf].map(b => b.toString(16).padStart(2, "0")).join("");
 
 const Client = class {
   constructor(hub, clientConn) {

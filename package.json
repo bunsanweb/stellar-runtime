@@ -5,7 +5,7 @@
     "nw": "0.47.1-sdk",
     "websocket": "*"
   },
-  "chromium-args": "--javascript-harmony --enable-experimental-web-platform-features",
+  "chromium-args": "--javascript-harmony --enable-experimental-web-platform-features --enable-logging=stderr",
   "scripts": {
     "start": "nw"
   }
