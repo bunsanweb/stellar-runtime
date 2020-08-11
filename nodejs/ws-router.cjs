@@ -6,31 +6,35 @@ const idString =
       buf => [...buf].map(b => b.toString(16).padStart(2, "0")).join("");
 
 const Client = class {
-  constructor(hub, clientConn) {
+  constructor(hub, conn) {
     this.id = crypto.randomBytes(32);
     this.key = idString(this.id);
-    this.conn = clientConn;
+    this.conn = conn;
     this.hub = hub;
     this.onMessage = msg => this.handleMessage(msg);
     this.onClose = (...args)=> this.handleClose(...args);
     this.conn.on("message", this.onMessage);
-    const msg = Buffer.concat(this.id, Buffer.from([0]));
-    this.conn.sendBytes(msg);
+    this.conn.on("error", err => {
+      // TBD:
+      console.log("[client conn error]", err);
+    });
+    const msg = Buffer.concat([this.id, Buffer.from([0])]);
+    this.hub.conn.sendBytes(msg);
   }
   handleMessage(msg) {
     if (msg.type === "binary") {
-      const data = Buffer.concat(this.id, Buffer.from([4]), msg.binaryData);
+      const data = Buffer.concat([this.id, Buffer.from([4]), msg.binaryData]);
       this.hub.conn.sendBytes(data);
     } else if (msg.type === "utf8") {
       const binary = new TextEncoder().encode(msg.utf8Data);
-      const data = Buffer.concat(this.id, Buffer.from([2]), binary);
+      const data = Buffer.concat([this.id, Buffer.from([2]), binary]);
       this.hub.conn.sendBytes(data);
     }
   }
-  handleMessage(reasonCode, description) {
-    this.hub.delete(this.key);
-    const msg = Buffer.concat(this.id, Buffer.from([1]));
-    this.conn.sendBytes(msg);
+  handleClose(reasonCode, description) {
+    this.hub.clients.delete(this.key);
+    const msg = Buffer.concat([this.id, Buffer.from([1])]);
+    this.hub.conn.sendBytes(msg);
   }
 };
 
@@ -63,33 +67,40 @@ const Hub = class {
       this.conn.on("message", this.onMessage);
       this.conn.once("close", this.onClose);
     });
+    this.conn.on("error", err => {
+      // TBD:
+      console.log("[hub conn error]", err);
+    });
+    //this.conn.close();
+    console.log("[init]");
   }
   add(clientConn) {
     const client = new Client(this, clientConn);
-    this.clients.add(client.key, client);
+    this.clients.set(client.key, client);
   }
   
   handleMessage({type, binaryData}) {
     const id = binaryData.subarray(0, 32);
     const key = idString(id);
     const mtype = binaryData[32];
-    if (!this.hubs.has(key)) return;
-    const hub = this.hubs.get(key);
+    if (!this.clients.has(key)) return;
+    const client = this.clients.get(key);
     if (mtype === 1) {
       const reasonCode = binaryData.readUInt32LE(33);
       const description = new TextDecoder().decode(binaryData.subarray(37));
-      this.hubs.delete(key);
-      hub.conn.close(reasonCode, description);      
+      this.clients.delete(key);
+      client.conn.close(reasonCode, description);      
     } else if (mtype === 2) {
       const text = new TextDecoder().decode(binaryData.subarray(33));
-      hub.conn.sendUTF(text);
+      client.conn.sendUTF(text);
     } else if (mtype === 4) {
-      hub.conn.sendBytes(binaryData.subarray(33));      
+      client.conn.sendBytes(binaryData.subarray(33));      
     }
   }
+
   handleClose(reasonCode, description) {
     this.router.hubs.delete(this.conf.path);
-    for (const hub of this.hubs.values()) {
+    for (const hub of this.router.hubs.values()) {
       hub.conn.close(reasonCode, description);
     }
   }
@@ -98,7 +109,7 @@ const Hub = class {
 const WSRouter = class {
   constructor(httpServer) {
     this.hubs = new Map();
-    this.onRequest = req => this.handleReqest(req);;
+    this.onRequest = req => this.handleRequest(req);;
     this.wsServer = new websocket.server({
       httpServer,
       autoAcceptConnections: false,
@@ -108,19 +119,25 @@ const WSRouter = class {
     this.wsServer.on("request", this.onRequest);
   }
   handleRequest(req) {
-    console.log(req.origin, req.resource, req.resourceURL);
+    //console.log("[origin]", req.origin);
+    console.log("[resource]", req.resource);
+    //console.log("[resourceURL]", JSON.stringify(req.resourceURL));
     if (this.hubs.has(req.resource)) {
       const hub = this.hubs.get(req.resource);
-      const conn = req.aceept("client", req.origin);
+      const conn = req.accept(null, req.origin);
       hub.add(conn);
-    } else if (req.resourceURL === "") {
-      const conn = req.aceept("hub", req.origin);
+    } else if (req.resource === "/") {
+      const conn = req.accept("hub", null);
       const hub = new Hub(this, conn);
     }
   }
   register(hub) {
-    if (hub.has(hub.conf.path)) return;
+    if (this.hubs.has(hub.conf.path)) return;
     this.hubs.set(hub.conf.path, hub);
+  }
+  stop() {
+    // TBD: closing all hubs
+    this.wsServer.shutDown();
   }
 };
 exports.WSRouter = WSRouter;

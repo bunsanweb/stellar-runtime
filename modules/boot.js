@@ -77,7 +77,7 @@ const createSandboxView = (state, sandbox, url = "") => {
 };
 
 const main = async () => {
-  await server.start(8000);
+  //await server.start(8000);
   const state = {
     sandboxes: [],
     storage: await Storage.open(),
@@ -87,7 +87,7 @@ const main = async () => {
     (async () => {
       try {
         await Promise.all(state.sandboxes.map(sandbox => sandbox.stop()));
-        await server.stop();
+        //await server.stop();
         win.close(true);
      } catch (error) {
        console.error(error);

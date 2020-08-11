@@ -8,9 +8,12 @@ const server = http.createServer((req, res) => {
 });
 const wsRouter = new WSRouter(server);
 
-exports.start = port => new Promise(f => server.listen(port, () => {
+exports.start = (port = 8000) => new Promise(f => server.listen(port, () => {
   console.log(`http://localhost:${port}/`);
   f();
 }));
-exports.stop = () => new Promise(f => server.close(() => f()));
+exports.stop = () => new Promise(f => {
+  wsRouter.stop();
+  server.close(() => f());
+});
 
