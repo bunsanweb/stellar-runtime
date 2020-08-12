@@ -2,20 +2,20 @@
   <head>
     <meta charset="utf-8" />
     <script type="module">
-let sock;
-document.querySelector("#connect").addEventListener("click", ev => {
+document.querySelector("#send").addEventListener("click", ev => {
   const wsUrl = document.querySelector("#endpoint").value;
-  sock = new WebSocket(wsUrl);
+  const sock = new WebSocket(wsUrl, ["echo", "echo2"]);
   sock.addEventListener("open", ev => {
-    document.querySelector("#send").disabled = false;
-  });
+    console.log("[onopen] protocol:", sock.protocol);    
+    sock.send(document.querySelector("#message").value);
+  }, {once: true});
+  sock.addEventListener("close", ev => {
+    console.log("[onclose]");
+  }, {once: true});
   sock.addEventListener("message", ev => {
     const pre = document.querySelector("pre");
     pre.textContent = `${ev.data}\n${pre.textContent}`;
   });
-});
-document.querySelector("#send").addEventListener("click", ev => {
-  sock.send(document.querySelector("#message").value);
 });
     </script>
   </head>
@@ -23,9 +23,8 @@ document.querySelector("#send").addEventListener("click", ev => {
     <h1>WebSocket: echo client</h1>
     <div>
       <label>ws url: <input id="endpoint"></label>
-      <button id="connect">connect</button>
     </div>
-    <input id="message" value="hello"><button id="send" disabled>send</button>
+    <input id="message" value="hello"><button id="send">send</button>
     <pre></pre>
   </body>
 </html>

@@ -18,10 +18,12 @@ const init = id => {
   wsRouter = new WSRouter(wsUrl, path);
   document.querySelector("#wsurl").textContent = `${wsUrl}${path.slice(1)}`;
   wsRouter.addEventListener("connect", ev => {
-    const {socket} = ev.detail;
+    //console.log("protocols", ev.detail.protocols);
+    const socket = ev.detail.accept("echo");
     socket.addEventListener("message", ev => {
       pre.textContent = `${ev.data}\n${pre.textContent}`
       socket.send(ev.data);
+      socket.close();
     });
   });
 };

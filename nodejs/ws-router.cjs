@@ -6,20 +6,26 @@ const idString =
       buf => [...buf].map(b => b.toString(16).padStart(2, "0")).join("");
 
 const Client = class {
-  constructor(hub, conn) {
+  constructor(hub, req) {
     this.id = crypto.randomBytes(32);
     this.key = idString(this.id);
-    this.conn = conn;
+    this.req = req;;
     this.hub = hub;
     this.onMessage = msg => this.handleMessage(msg);
     this.onClose = (...args)=> this.handleClose(...args);
+    //this.init();
+    const protocols = new TextEncoder().encode(
+      JSON.stringify(req.requestedProtocols));
+    const msg = Buffer.concat([this.id, Buffer.from([0]), protocols]);
+    this.hub.conn.sendBytes(msg);
+  }
+  init(protocol) {
+    this.conn = this.req.accept(protocol || null, null);
     this.conn.on("message", this.onMessage);
     this.conn.on("error", err => {
       // TBD:
       console.log("[client conn error]", err);
     });
-    const msg = Buffer.concat([this.id, Buffer.from([0])]);
-    this.hub.conn.sendBytes(msg);
   }
   handleMessage(msg) {
     if (msg.type === "binary") {
@@ -46,6 +52,7 @@ const Client = class {
 //       - 2-string
 //       - 4-binary
 // [33..]: data
+//       - (open): [33..] protocol string or null
 //       - (close): [33..36] reasonCode, [37..] description
 //       - (string): [33..] UTF8 coded string
 //       - (binary): binary data
@@ -71,11 +78,10 @@ const Hub = class {
       // TBD:
       console.log("[hub conn error]", err);
     });
-    //this.conn.close();
     console.log("[init]");
   }
-  add(clientConn) {
-    const client = new Client(this, clientConn);
+  add(req) {
+    const client = new Client(this, req);
     this.clients.set(client.key, client);
   }
   
@@ -85,7 +91,10 @@ const Hub = class {
     const mtype = binaryData[32];
     if (!this.clients.has(key)) return;
     const client = this.clients.get(key);
-    if (mtype === 1) {
+    if (mtype === 0) {
+      const protocol = new TextDecoder().decode(binaryData.subarray(33));
+      client.init(protocol);
+    } else if (mtype === 1) {
       const reasonCode = binaryData.readUInt32LE(33);
       const description = new TextDecoder().decode(binaryData.subarray(37));
       this.clients.delete(key);
@@ -124,10 +133,9 @@ const WSRouter = class {
     //console.log("[resourceURL]", JSON.stringify(req.resourceURL));
     if (this.hubs.has(req.resource)) {
       const hub = this.hubs.get(req.resource);
-      const conn = req.accept(null, req.origin);
-      hub.add(conn);
+      hub.add(req);
     } else if (req.resource === "/") {
-      const conn = req.accept("hub", null);
+      const conn = req.accept("ws-router-hub", null);
       const hub = new Hub(this, conn);
     }
   }
