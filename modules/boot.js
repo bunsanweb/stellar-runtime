@@ -7,7 +7,8 @@ const win = window.nw.Window.get();
 win.showDevTools();
 
 // NOTE: require's path is relative from package.json, not browser files
-const server = window.nw.require("./nodejs/server.cjs"); 
+//const server = window.nw.require("./nodejs/server.cjs"); 
+const server = window.nw.require("./nodejs/spawn.cjs");
 
 const createSandboxView = (state, sandbox, url = "") => {
   const view = document.createElement("div");
@@ -77,7 +78,7 @@ const createSandboxView = (state, sandbox, url = "") => {
 };
 
 const main = async () => {
-  //await server.start(8000);
+  await server.start(8000);
   const state = {
     sandboxes: [],
     storage: await Storage.open(),
@@ -87,7 +88,7 @@ const main = async () => {
     (async () => {
       try {
         await Promise.all(state.sandboxes.map(sandbox => sandbox.stop()));
-        //await server.stop();
+        await server.stop();
         win.close(true);
      } catch (error) {
        console.error(error);
