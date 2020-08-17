@@ -62,7 +62,7 @@ export const Sandbox = class extends EventTarget {
         this.mc = undefined;
       }, {once: true});
       mc.port1.start();
-      this.iframe.contentWindow.postMessage(
+      if (this.iframe.contentWindow) this.iframe.contentWindow.postMessage(
         {event: "stop"}, "*", [mc.port2]);
     });
     const timeoutP = new Promise(f => setTimeout(f, timeout));

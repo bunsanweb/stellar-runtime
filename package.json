@@ -2,7 +2,7 @@
   "name": "stellar-runtime",
   "main": "boot.html",
   "dependencies": {
-    "nw": "0.47.2-sdk",
+    "nw": "0.47.3-sdk",
     "websocket": "*"
   },
   "chromium-args": "--javascript-harmony --enable-experimental-web-platform-features --enable-logging=stderr",
