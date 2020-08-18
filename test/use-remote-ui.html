@@ -1,0 +1,39 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script type="module">
+import {WSRouter} from "../lib/ws-router.js";
+import {RemoteUI} from "../lib/remote-ui.js";
+
+const wsUrl = "ws://localhost:8000/";
+
+window.addEventListener("message", ev => {
+  switch (ev.data.event) {
+    case "start": return init(ev.data.id);
+    case "stop": return stop();
+  }
+});
+
+let wsRouter;
+const init = id => {
+  const pre = document.querySelector("pre");
+  const path = `/${id}/ui`;
+  wsRouter = new WSRouter(wsUrl, path);
+  const remote = new RemoteUI(wsRouter);
+  document.querySelector("#wsurl").textContent = `${wsUrl}${path.slice(1)}`;
+};
+const stop = () => {
+  if (wsRouter) wsRouter.stop();
+};
+    </script>
+  </head>
+  <body>
+    <div>wsurl: <span id="wsurl"></span></div>
+    <input value="hello"/><button onclick="
+const li = document.createElement(`li`);
+li.append(document.querySelector(`input`).value);
+document.querySelector(`ul`).append(li);
+">button</button>
+    <ul></ul>
+  </body>
+</html>

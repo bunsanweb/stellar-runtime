@@ -1,0 +1,95 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script type="module">
+window.addEventListener("message", ev => {
+  if (ev.data.event === "start") return start(ev.data);
+  if (ev.data.event === "config-update") {}
+  if (ev.data.event === "stop") {}
+});
+
+const start = ({id, config}) => {
+  const {wsurl, retry, count} = config;
+  console.log("[wsurl]", wsurl);
+  startWS(wsurl, retry, count);
+};
+
+const startWS = (wsurl, retry = 1000, count = 10) => {
+  const sock = new WebSocket(wsurl, ["remote-ui"]);
+  const doRetry = ev => {
+    console.log("[retry]");
+    sock.close();
+    if (count > 0) setTimeout(() => startWS(wsurl, retry), retry, count - 1); 
+  };
+  sock.addEventListener("error", doRetry);
+  sock.addEventListener("open", ev => {
+    console.log("[open]");
+    sock.removeEventListener("error", doRetry);
+    // TBD: capture UI events at document
+  }, {once: true});
+  sock.addEventListener("close", ev => {
+  }, {once: true});
+  sock.addEventListener("message", ev => {
+    console.log("[message]", ev.data);
+    for (const msg of JSON.parse(ev.data)) applyMessage(msg);
+  });
+};
+
+const applyMessage = msg => {
+  switch (msg.type) {
+    case "init": return applyInit(msg);
+    case "change": return applyChange(msg);
+    case "childList": return applyChildList(msg);
+    case "attributes": return applyAttributes(msg);
+    case "characterData": return applyCharacterData(msg);
+  }  
+};
+
+const locate = (indexList, elem = document.documentElement) => {
+  if (indexList.length === 0) return elem;
+  return locate(indexList.slice(1), elem.childNodes[indexList[0]]);
+};
+const htmlToNode = html => {
+  const t = document.createElement("template");
+  t.innerHTML = html
+  return t.content; // as DocumentFragment to insert
+};
+
+
+const applyInit = ({html}) => {
+  document.documentElement.innerHTML = html;
+};
+const applyChange = ({target, value}) => {
+  locate(target).value = value;
+};
+const applyChildList = ({target, addedNodes, removedNodes}) => {
+  const parent = locate(target);
+  console.log(parent);
+  const added = addedNodes.sort((a, b) => a.index - b.index);
+  const removed = removedNodes.sort((a, b) => b.index - a.index);
+  for (const {index} of removed) {
+    parent.childNodes[index].remove();
+  }
+  for (const {index, type, content} of added) {
+    const node = type === "element" ? htmlToNode(content) :
+                 document.createTextNode(content);
+    console.log(node);
+    parent.insertBefore(node, parent.childNodes[index]);
+  }
+};
+const applyAttributes = ({
+  target, attributeName, attributeNamespace, has, value
+}) => {
+  if (has) {
+    locate(target).setAttributeNS(attributeNamespace, attributeName, value);
+  } else {
+    locate(target).removeAttributeNS(attributeNamespace, attributeName);
+  }
+};
+const applyCharacterData = ({target, data}) => {
+  locate(target).data = data;
+};
+    </script>
+  </head>
+  <body></body>
+</html>

@@ -13,13 +13,13 @@ const Client = class {
     this.hub = hub;
     this.onMessage = msg => this.handleMessage(msg);
     this.onClose = (...args)=> this.handleClose(...args);
-    //this.init();
     const protocols = new TextEncoder().encode(
       JSON.stringify(req.requestedProtocols));
     const msg = Buffer.concat([this.id, Buffer.from([0]), protocols]);
     this.hub.conn.sendBytes(msg);
   }
   init(protocol) {
+    console.log("[client accept]", protocol);
     this.conn = this.req.accept(protocol || null, null);
     this.conn.on("message", this.onMessage);
     this.conn.on("error", err => {
@@ -93,7 +93,13 @@ const Hub = class {
     const client = this.clients.get(key);
     if (mtype === 0) {
       const protocol = new TextDecoder().decode(binaryData.subarray(33));
-      client.init(protocol);
+      try {
+        client.init(protocol);
+      } catch (error) {
+        // TBD: when accept non-requested protocol
+        console.log(error);
+        this.clients.delete(client.key);
+      }
     } else if (mtype === 1) {
       const reasonCode = binaryData.readUInt32LE(33);
       const description = new TextDecoder().decode(binaryData.subarray(37));
@@ -137,6 +143,8 @@ const WSRouter = class {
     } else if (req.resource === "/") {
       const conn = req.accept("ws-router-hub", null);
       const hub = new Hub(this, conn);
+    } else {
+      req.reject();
     }
   }
   register(hub) {
