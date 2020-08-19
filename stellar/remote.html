@@ -25,6 +25,7 @@ const startWS = (wsurl, retry = 1000, count = 10) => {
   sock.addEventListener("open", ev => {
     console.log("[open]");
     sock.removeEventListener("error", doRetry);
+    captureEvents(sock);
     // TBD: capture UI events at document
   }, {once: true});
   sock.addEventListener("close", ev => {
@@ -89,6 +90,90 @@ const applyAttributes = ({
 const applyCharacterData = ({target, data}) => {
   locate(target).data = data;
 };
+
+const captureEvents = sock => {
+  const listener = ev => {
+    const msg = JSON.stringify(serializeEvents(ev));
+    console.log(msg);
+    sock.send(msg);
+    if (!(ev instanceof InputEvent)) ev.preventDefault();
+  };
+  document.documentElement.addEventListener("input", listener);
+  document.documentElement.addEventListener("beforeinput", listener);
+  document.documentElement.addEventListener("click", listener);
+  document.documentElement.addEventListener("dblclick", listener);
+  document.documentElement.addEventListener("mousedown", listener);
+  document.documentElement.addEventListener("mouseup", listener);
+  document.documentElement.addEventListener("mousemove", listener);
+};
+const locateNode = (node, decendants = []) => {
+  if (node === document.documentElement) return decendants;
+  const parent = node.parentElement;
+  const index = [...parent.childNodes].findIndex(n => n.isSameNode(node));
+  return locateNode(parent, [index, ...decendants]);
+}
+
+const serializeEvents = ev => {
+  console.log(ev.constructor);
+  switch (ev.constructor) {
+    case InputEvent: return serializeInputEvent(ev);
+    case MouseEvent: return serializeMouseEvent(ev);
+    case PointerEvent: return serializePointerEvent(ev);
+    default: return {}; // not yet implemented
+  }
+};
+const serializeInputEvent = ev => {
+  //NOTE: InputEvent as result target.value
+  return {
+    constructor: "InputEvent",
+    target: locateNode(ev.target),
+    type: ev.type,
+    value: ev.target.value,
+  }
+};
+const serializeMouseEvent = ev => {
+  const {left, top} = ev.target.getBoundingClientRect();
+  return {
+    constructor: "MouseEvent",
+    target: locateNode(ev.target),
+    type: ev.type,
+    relatedTarget: ev.relatedTarget ? locateNode(ev.relatedTarget) : null,
+    screenX: window.screenX + left, screenY: window.screenY + top,
+    clientX: left, clientY: top,
+    init: {
+      screenX: ev.screenX, screenY: ev.screenY,
+      clientX: ev.clientX, clientY: ev.clientY,
+      ctrlKey: ev.ctrlKey, shiftKey: ev.shiftKey,
+      altKey: ev.altKey, metaKey: ev.metaKey,
+      button: ev.button, buttons: ev.buttons, region: ev.region,
+    },
+  };
+};
+const serializePointerEvent = ev => {
+  const {left, top} = ev.target.getBoundingClientRect();
+  return {
+    constructor: "PointerEvent",
+    target: locateNode(ev.target),
+    type: ev.type,
+    relatedTarget: ev.relatedTarget ? locateNode(ev.relatedTarget) : null,
+    screenX: window.screenX + left, screenY: window.screenY + top,
+    clientX: left, clientY: top,
+    init: {
+      // MouseEvent
+      screenX: ev.screenX, screenY: ev.screenY,
+      clientX: ev.clientX, clientY: ev.clientY,
+      ctrlKey: ev.ctrlKey, shiftKey: ev.shiftKey,
+      altKey: ev.altKey, metaKey: ev.metaKey,
+      button: ev.button, buttons: ev.buttons, region: ev.region,
+      // PointerEvent
+      pointerId: ev.pointerId, width: ev.width, height: ev.height,
+      pressure: ev.pressure, tangentialPressure: ev.tangentialPressure,
+      tiltX: ev.tiltX, tiltY: ev.tiltY, twist: ev.twist,
+      pointerType: ev.pointerType, isPrimaly: ev.isPrimary,
+    },
+  };
+};
+// TBD: KeyboardEvent, WheelEvent, CompositionEvent
     </script>
   </head>
   <body></body>
