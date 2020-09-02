@@ -10,14 +10,14 @@ window.addEventListener("message", ev => {
 
 const start = ({id, config}) => {
   const {wsurl, retry, count} = config;
-  console.log("[wsurl]", wsurl);
+  //console.log("[wsurl]", wsurl);
   startWS(wsurl, retry, count);
 };
 
 const startWS = (wsurl, retry = 1000, count = 10) => {
   const sock = new WebSocket(wsurl, ["remote-ui"]);
   const doRetry = ev => {
-    console.log("[retry]");
+    console.info(`[retry] after ${retry}ms`);
     sock.close();
     if (count > 0) setTimeout(() => startWS(wsurl, retry), retry, count - 1); 
   };
@@ -31,7 +31,7 @@ const startWS = (wsurl, retry = 1000, count = 10) => {
   sock.addEventListener("close", ev => {
   }, {once: true});
   sock.addEventListener("message", ev => {
-    console.log("[message]", ev.data);
+    //console.log("[message]", ev.data);
     for (const msg of JSON.parse(ev.data)) applyMessage(msg);
   });
 };
@@ -65,7 +65,7 @@ const applyChange = ({target, value}) => {
 };
 const applyChildList = ({target, addedNodes, removedNodes}) => {
   const parent = locate(target);
-  console.log(parent);
+  //console.log(parent);
   const added = addedNodes.sort((a, b) => a.index - b.index);
   const removed = removedNodes.sort((a, b) => b.index - a.index);
   for (const {index} of removed) {
@@ -74,7 +74,7 @@ const applyChildList = ({target, addedNodes, removedNodes}) => {
   for (const {index, type, content} of added) {
     const node = type === "element" ? htmlToNode(content) :
                  document.createTextNode(content);
-    console.log(node);
+    //console.log(node);
     parent.insertBefore(node, parent.childNodes[index]);
   }
 };
@@ -94,9 +94,9 @@ const applyCharacterData = ({target, data}) => {
 const captureEvents = sock => {
   const listener = ev => {
     const msg = JSON.stringify(serializeEvents(ev));
-    console.log(msg);
+    //console.log(msg);
     sock.send(msg);
-    if (!(ev instanceof InputEvent)) ev.preventDefault();
+    //if (!(ev instanceof InputEvent)) ev.preventDefault();
   };
   document.documentElement.addEventListener("input", listener);
   document.documentElement.addEventListener("beforeinput", listener);
@@ -114,7 +114,7 @@ const locateNode = (node, decendants = []) => {
 }
 
 const serializeEvents = ev => {
-  console.log(ev.constructor);
+  //console.log(ev.constructor);
   switch (ev.constructor) {
     case InputEvent: return serializeInputEvent(ev);
     case MouseEvent: return serializeMouseEvent(ev);

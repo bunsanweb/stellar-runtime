@@ -7,10 +7,11 @@ export const Sandbox = class extends EventTarget {
     const id = Array.from(rand, v => v.toString(16).padStart(2, "0")).join("");
     return new this(id, {});
   }
-  constructor(id, config) {
+  constructor(id, config, info) {
     super();
     this.id = id;
     this.config = config;
+    this.info = info;
     this.iframe = document.createElement("iframe");
     this.iframe.setAttribute("nwdisable", "nwdisable");
   }
@@ -36,7 +37,8 @@ export const Sandbox = class extends EventTarget {
     return new Promise((f, r) => {
       this.iframe.addEventListener("load", ev => {
         this.iframe.contentWindow.postMessage(
-          {event: "start", id: this.id, config: this.config}, "*", [this.mc.port2]);
+          {event: "start", id: this.id, config: this.config, info: this.info},
+          "*", [this.mc.port2]);
         const event = new SandboxEvent("updated", {data: this});
         this.dispatchEvent(event);
         f(this);
