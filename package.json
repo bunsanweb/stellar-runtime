@@ -4,6 +4,7 @@
   "dependencies": {
     "nw": "0.48.1-sdk",
     "ipfs": "*",
+    "ipfs-http-client": "*",
     "websocket": "*"
   },
   "chromium-args": "--javascript-harmony --enable-experimental-web-platform-features --enable-logging=stderr",

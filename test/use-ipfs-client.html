@@ -1,0 +1,19 @@
+<html>
+  <head>
+    <script type="module">
+// NOTE: currently not worked as stellar instance (worked well on browser)
+//  fetch("http://127.0.0.1:5002/api/v0/version", {method: "POST"} returns 403
+//  (not only executed in iframe, same result in main frame)
+
+import "https://cdn.jsdelivr.net/npm/ipfs-http-client/dist/index.min.js";
+
+(async () => {
+  const node = window.node = IpfsHttpClient("http://127.0.0.1:5002");
+  const h1 = document.createElement("h2");
+  h1.append(`IPFS version: ${(await node.version()).version}`);
+  document.body.append(h1, `IPFS ID: ${(await node.id()).id}`);
+})().catch(console.error);
+    </script>
+  </head>
+  <body></body>
+</html>

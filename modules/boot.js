@@ -11,7 +11,9 @@ win.showDevTools();
 
 // NOTE: require's path is relative from package.json, not this file
 const server = window.nw.require("./nodejs/server.cjs"); 
-//const server = window.nw.require("./nodejs/spawn.cjs"); //WORKAROUND: 0.47.3
+//const server = window.nw.require("./nodejs/spawn-server.cjs"); //WORKAROUND: 0.47.3
+//const ipfs = window.nw.require("./nodejs/ipfs.cjs"); // SIGNAL 11 on 0.48.1
+const ipfs = window.nw.require("./nodejs/spawn-ipfs.cjs"); //WORKAROUND: 0.48.1
 
 const createSandboxView = (state, sandbox, url = "") => {
   const view = document.createElement("div");
@@ -82,6 +84,8 @@ const createSandboxView = (state, sandbox, url = "") => {
 
 const main = async () => {
   await server.start(info.serverPort);
+  info.ipfs = await ipfs.start("./repo-ipfs");
+  console.log("IPFS info", JSON.stringify(info.ipfs));
   const state = {
     sandboxes: [],
     storage: await Storage.open(),
@@ -91,7 +95,7 @@ const main = async () => {
     (async () => {
       try {
         await Promise.all(state.sandboxes.map(sandbox => sandbox.stop()));
-        await server.stop();
+        await Promise.all([ipfs.stop(), server.stop()]);
         win.close(true);
      } catch (error) {
        console.error(error);
@@ -99,8 +103,7 @@ const main = async () => {
       }
     })();
   });
-  
-  
+    
   // load from storage
   const sandboxPromises = [];
   const sandboxList = document.createElement("div");
