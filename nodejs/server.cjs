@@ -3,7 +3,8 @@ const {WSRouter} = require("./ws-router.cjs");
 
 const createServer = () => {
   const httpServer = http.createServer((req, res) => {
-    console.log(req.url); // console out may require some options
+    //console.log(req.url); // console out may require some options
+    //console.log(JSON.stringify(req.headers));
     res.writeHead(200, {"content-type": "text/html;charset=utf-8"});
     res.end("<html><head></head><body>Hello node</body></html>");
   });

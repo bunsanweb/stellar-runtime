@@ -2,11 +2,12 @@
   "name": "stellar-runtime",
   "main": "boot.html",
   "dependencies": {
-    "nw": "0.48.1-sdk",
     "ipfs": "*",
     "ipfs-http-client": "*",
+    "nw": "0.48.1-sdk",
     "websocket": "*"
   },
+  "user-agent": "NW.js",
   "chromium-args": "--javascript-harmony --enable-experimental-web-platform-features --enable-logging=stderr",
   "scripts": {
     "start": "nw"
