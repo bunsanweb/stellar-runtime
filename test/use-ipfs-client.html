@@ -9,11 +9,52 @@ import "https://cdn.jsdelivr.net/npm/ipfs-http-client/dist/index.min.js";
 
 (async () => {
   const node = window.node = IpfsHttpClient("http://127.0.0.1:5002");
-  const h1 = document.createElement("h2");
-  h1.append(`IPFS version: ${(await node.version()).version}`);
-  document.body.append(h1, `IPFS ID: ${(await node.id()).id}`);
+  const h2 = document.createElement("h2");
+  h2.append(`IPFS version: ${(await node.version()).version}`);
+  document.querySelector("#info").append(
+    h2, `IPFS ID: ${(await node.id()).id}`);
+  
+  //pubsub
+  const topicId = "stellar-pubsub-test";  
+  await node.pubsub.subscribe(topicId, ({from, data, topicIDs, seqno}) => {
+    const text = new TextDecoder().decode(data);
+    document.querySelector("#log").textContent += `[${from}] ${text}\n`;
+  });
+  
+  document.querySelector("#publish").addEventListener("click", ev => {
+    (async () => {
+      await node.pubsub.publish(topicId, document.querySelector("#msg").value);
+    })().catch(console.log);
+  });
+  
+  document.querySelector("#connect").addEventListener("click", ev => {
+    const id = document.querySelector("#id").value.trim();
+    (async () => {
+      //await node.swarm.connect(`/p2p-circuit/p2p/${id}`);
+      for (const relay of await node.swarm.addrs()) {
+        if (relay.id === id) continue;
+	try {
+	  const relayId = `/p2p/${relay.id}/p2p-circuit/p2p/${id}`;
+          //console.log(relayId);
+	  await node.swarm.connect(relayId);
+        } catch (err) {
+          console.log(err);
+        }
+      }
+    })().catch(console.error);
+  });
 })().catch(console.error);
     </script>
   </head>
-  <body></body>
+  <body>
+    <div id="info"></div>
+    <div>
+      Pubsub: <input id="msg"><button id="publish">publish</button> 
+    </div>
+    <div>
+      swarm: (Peer ID) <input id="id"><button id="connect">connect</button> 
+    </div>
+    <hr />
+    <pre id="log"></pre>
+  </body>
 </html>
