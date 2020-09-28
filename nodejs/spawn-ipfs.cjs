@@ -1,3 +1,4 @@
+const path = require("path");
 const {spawn} = require("child_process");
 const IpfsHttpClient = require("ipfs-http-client");
 
@@ -5,10 +6,11 @@ let proc = null;
 exports.start = repo => new Promise((f, r) => {
   console.log(repo);
   if (!repo) return;
-  //proc = spawn("npx", ["jsipfs", "daemon"], {
-  proc = spawn("node", ["./node_modules/.bin/jsipfs", "daemon"], {
+  const cmd = path.resolve(process.cwd(), "./node_modules/.bin/jsipfs");
+  proc = spawn(cmd, ["daemon"], {
     env: Object.assign({"IPFS_PATH": repo}, process.env),
     stdio: [0, 1, 2],
+    shell: true,
   });
   waitHttpApi().then(f, r);
 });

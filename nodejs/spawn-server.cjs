@@ -7,7 +7,8 @@ let proc = null;
 exports.start = async (port = 8000) => {
   if (proc) return;
   proc = spawn("node", ["./nodejs/run-server.cjs", port], {
-    stdio: [0, 1, 2], 
+    stdio: [0, 1, 2],
+    shell: true,
   });
   await new Promise(f => setTimeout(f, 1000)); //wait to start up web server
 };
